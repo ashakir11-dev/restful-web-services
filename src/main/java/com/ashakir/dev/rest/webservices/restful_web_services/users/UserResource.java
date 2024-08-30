@@ -3,6 +3,9 @@ package com.ashakir.dev.rest.webservices.restful_web_services.users;
 import jakarta.validation.Valid;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -10,6 +13,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 import java.util.Locale;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 public class UserResource {
@@ -22,16 +28,21 @@ public class UserResource {
     }
 
     @GetMapping("/users")
-    private List<User> getAllUsers(){
+    List<User> getAllUsers(){
         return userDaoService.findAll();
     }
 
     @GetMapping("/users/{id}")
-    private User getUserById(@PathVariable int id){
+    private EntityModel<User> getUserById(@PathVariable int id){
         User user = userDaoService.findById(id);
         if(user == null)
             throw new UserNotFoundException("ID: " + id);
-        return user;
+
+        EntityModel<User> entity = EntityModel.of(user);
+        WebMvcLinkBuilder link = linkTo(methodOn(this.getClass()).getAllUsers());
+        entity.add(link.withRel("all-users"));
+
+        return entity;
     }
 
     @GetMapping("/users/name/{name}")
